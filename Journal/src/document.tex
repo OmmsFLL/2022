@@ -1,0 +1,129 @@
+\UseRawInputEncoding  % https://tex.stackexchange.com/a/429957/123368
+\documentclass[index=totoc,hyperref, openany]{labbook} %openany means no gap is made between lab days, remove to restore the gap. oneside can also be added to remove the shift that odd pages have to the right for easier reading.
+   
+% Margins
+\usepackage[margin=1in,inner=1.25in,outer=0.75in]{geometry}
+
+\usepackage[%
+  hidelinks,
+  backref=page,%
+  pdfpagelabels=true,%
+  plainpages=false,%
+  colorlinks=false,% 
+  bookmarks=true,%
+  pdfview=FitB,%
+  pdftitle={FLL Journal February 22, 2022 - Present},%
+  pdfcreator={Bellock.net},%
+  pdfauthor={Kenneth E. Bellock},%
+  pdfsubject={Bellock.net},%
+  pdfproducer={Bellock Journal Workshop v1.0.0},%
+  pdfkeywords={FLL,Lego,Kenneth,Bellock,Journal}  
+  ]{hyperref}
+  
+\usepackage{booktabs} % top and bottom rules for table 
+\usepackage{float} % places tables in the right place on page
+\usepackage{multicol}
+\usepackage{units}
+\usepackage{bookmark}
+\usepackage{pdfpages}
+\usepackage[]{units}
+\usepackage[T1]{fontenc}
+\usepackage{subcaption}
+\usepackage{siunitx}
+\usepackage{placeins}
+\usepackage{tabularx}
+\usepackage{pgfgantt}
+\usepackage{changepage}
+
+% Figure placements
+\usepackage{float}
+
+% Listings
+\usepackage{tcolorbox}
+\tcbuselibrary{theorems,listings,skins,breakable,minted}
+\usetikzlibrary{shapes,arrows}
+\newcounter{listings}
+
+% Glossary
+\input{glossary}
+
+% Used for jpg figures
+\usepackage{graphicx}
+
+% Custom Environments
+\newenvironment{summary}[1]{\textbf{#1:}\begin{adjustwidth}{1cm}{}}{\end{adjustwidth}}
+
+% Subfigure range references
+\usepackage[compress]{cleveref}
+\crefname{subfigure}{subfigure}{subfigures}
+\Crefname{subfigure}{Subfigure}{Subfigures}
+\crefrangelabelformat{subfigure}{(#3#1#4--#5\crefstripprefix{#1}{#2}#6)}
+
+\usepackage{tikz}
+\usetikzlibrary{positioning,calc,patterns,decorations.pathmorphing,decorations.markings,shapes,arrows}
+\usepackage{amsmath,bm,times}
+\def\english#1{\emph{#1}}
+\tikzset{
+  arrow/.style={-stealth', line width=0.5pt},
+  every picture/.append style={line width=1pt},
+}
+
+\setcounter{secnumdepth}{-1}  % Disables chapter, section and subsection numbering.
+
+\date{} % Don't want a date under email address on title page so this makes it nothing
+\newcommand{\HRule}{\rule{\linewidth}{0.5mm}} % command to make the lines in title page
+\setlength\parindent{0pt} % Removes all indentation from paragraphs
+
+% Change the vertical space between paragraphs
+\usepackage[skip=\baselineskip]{parskip}
+
+% Customize the Lab Book to work like a Work Journal
+\newcommand{\newday}{\labday}
+\newcommand{\newentry}[3]{\experiment[#2]{#1 #2\hfill#3}}
+
+% Define my own tilde ~
+\newcommand{\mytilde}{\raise.17ex\hbox{$\scriptstyle\mathtt{\sim}$}}
+
+%---------
+% Creates a new environment called my_itemize that I can use instead of itemize. This new environment is identical to itemize but makes it so no gaps are present between bulleted points.
+\newenvironment{my_itemize} 
+{\begin{itemize}
+\setlength{\itemsep}{1pt} 
+\setlength{\parskip}{0pt}
+ \setlength{\parsep}{0pt}}
+{\end{itemize}}
+%---------
+
+%----------- DEFINITION OF EXPERIMENTS FOR EASY REFERENCE LATER
+\newexperiment{genadmin}{Gen/Admin}
+\newexperiment{onboarding}{Onboarding}
+%-----------
+
+\usepackage{scrhack}
+
+\begin{document} 
+
+\frontmatter
+\title{
+	\begin{center}
+	  \HRule \\[0.4cm]
+	  { \Huge \bfseries FLL Journal}\\[0.4cm]
+	  \HRule \\[1.5cm]
+                  \includegraphics[width=90mm]{fll-logo-horizontal}
+	\end{center}
+}
+\author{\Huge Kenneth E. Bellock \\ \\ \LARGE ken@bellock.net \\[1.5cm] February 22, 2022 - Present\\[1.5cm]}
+\maketitle
+
+\printindex
+\printglossaries
+\glsaddall
+\tableofcontents
+
+\mainmatter
+
+\include{fields}
+\include{entries}
+
+
+\end{document}

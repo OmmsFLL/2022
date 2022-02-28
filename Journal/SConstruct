@@ -1,0 +1,28 @@
+import os
+import SCons
+
+# Add the makotemplate tool path
+SCons.Tool.DefaultToolpath.insert(0, Dir('../contrib').abspath)
+
+# Create Build Environment
+temp_env = DefaultEnvironment(tools=[])
+env = Environment(
+    tools=['tex', 'latex', 'pdflatex', 'makotemplate'],
+    ENV=temp_env['ENV'])
+common = '../Common'
+env.Append(PDFLATEXFLAGS=['-halt-on-error', '-shell-escape', '-synctex=1'],
+           TEXINPUTS=[Dir('media').abspath])
+
+# Program Options
+AddOption('--synctex', dest='synctex', action='store_true', default=False,
+          help="enable build mode complient with most latex ide's")
+
+# Build
+Export('env')
+kwargs = {}
+if not GetOption('synctex'):
+    kwargs['variant_dir'] = 'build'
+    kwargs['duplicate'] = True
+doc = SConscript('src/SConscript', **kwargs)
+install = env.InstallAs(
+    'dist/FLL Journal - Kenneth E. Bellock.pdf', doc)

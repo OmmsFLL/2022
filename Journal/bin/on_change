@@ -1,0 +1,142 @@
+import os
+import sys
+import time
+import logging
+import subprocess
+import sched
+import yaml
+import argparse
+from watchdog.observers import Observer
+from watchdog.events import PatternMatchingEventHandler
+
+__VERSION__ = '1.0.0'
+__AUTHOR__ = 'Kenneth E. Bellock'
+
+
+class MyFileEventHandler(PatternMatchingEventHandler):
+    def __init__(self, *args, **kwargs):
+        self.schedule_config_load = False
+        self.schedule_build = False
+        self.schedule_backtrace = False
+        self.last_message = None
+        PatternMatchingEventHandler.__init__(self, *args, **kwargs)
+
+    def on_any_event(self, event):
+        if (os.path.basename(event.src_path).lower().startswith('core')
+                and os.path.isfile(event.src_path)):
+            self.log('Found core file %s with backtrace:' % event.src_path)
+            self.schedule_backtrace = event.src_path
+        elif os.path.basename(event.src_path) == '.on_change':
+            self.log('Configuration file change detected, loading new config, '
+                     'then scheduling a new build')
+            self.schedule_config_load = True
+        else:
+            self.log('Event detected on %s' % event.src_path)
+            self.schedule_build = True
+
+    def log(self, message):
+        """
+        Log a message and remove duplicates.
+        Duplicates occur often.  For example, creation of a new file is usually
+        captured as two file events, the creation of the file, and the
+        modification of its contents.  This method culls out duplicate
+        messages.
+        """
+        if message == self.last_message:
+            return
+        logging.info(message)
+        self.last_message = message
+
+
+class OnChange(object):
+
+    def __init__(self):
+        self.config = {'Command': 'scons',
+                       'SubCommand': '',
+                       'BacktraceCommand': '',
+                       'Patterns': ['src/*'],
+                       'Ignore': ['*/.sconsign*'],
+                       'Delay': .5,
+                       'Priority': 1}
+        self.on_change_file = '.on_change'
+        self.observer = Observer()
+        self.watch_dir = '.'
+        self.load_config()
+        logging.info('Watching for changes...')
+        self.mainloop()
+
+    def mainloop(self):
+        self.calendar = sched.scheduler(time.time, time.sleep)
+        self.loopframe()
+        try:
+            self.calendar.run()
+        except (KeyboardInterrupt, SystemExit):
+            logging.info('Keyboard Interrupt detected, stopping...')
+            sys.exit()
+
+    def loopframe(self):
+        # Schedule next frame
+        self.calendar.enter(self.config['Delay'], self.config['Priority'],
+                            self.loopframe, ())
+        speak = False
+        if self.config_event_handler.schedule_config_load:
+            self.load_config()
+            self.config_event_handler.schedule_config_load = False
+            self.event_handler.schedule_build = True
+        if self.event_handler.schedule_build:
+            status = subprocess.call(self.config['Command'], shell=True)
+            if not status:
+                subprocess.call(self.config['SubCommand'], shell=True)
+            self.event_handler.schedule_build = False
+            speak = True
+        if self.event_handler.schedule_backtrace:
+            status = subprocess.call(
+                self.config['BacktraceCommand'] % (
+                    self.config['SubCommand'],
+                    self.event_handler.schedule_backtrace), shell=True)
+            self.event_handler.schedule_backtrace = False
+            speak = True
+        if speak:
+            logging.info('Watching for changes...')
+
+    def load_config(self):
+        if not os.path.isfile(self.on_change_file):
+            with open(self.on_change_file, 'w') as f:
+                f.write(yaml.dump(self.config, default_flow_style=False))
+        with open(self.on_change_file, 'r') as f:
+            self.config = yaml.load(f)
+        self.event_handler = MyFileEventHandler(
+            patterns =self.config['Patterns'],
+            ignore_directories=True,
+            ignore_patterns=self.config['Ignore'])
+        self.config_event_handler = MyFileEventHandler(
+            patterns =['*/' + self.on_change_file],
+            ignore_directories=True)
+        if self.observer.is_alive():
+            self.observer.stop()
+            self.observer = Observer()
+        self.observer.schedule(self.event_handler, self.watch_dir,
+                               recursive=True)
+        self.observer.schedule(self.config_event_handler, self.watch_dir,
+                               recursive=True)
+        self.observer.start()
+
+
+if __name__ == "__main__":
+
+    parser = argparse.ArgumentParser(
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        description="File event detection/action manager")
+    parser.add_argument("-v", "--version",
+                       action="store_true")
+    parser.add_argument("-q", "--quiet",
+                       action="store_true")
+    args = parser.parse_args()
+    if args.version:
+        print(__VERSION__)
+        sys.exit()
+    if not args.quiet:
+        logging.basicConfig(level=logging.INFO,
+                            format='%(asctime)s - %(message)s',
+                            datefmt='%Y-%m-%d %H:%M:%S')
+    OnChange()

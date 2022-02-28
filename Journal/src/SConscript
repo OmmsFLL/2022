@@ -1,0 +1,22 @@
+import os
+Import('env')
+local_env = env.Clone()
+root = os.path.dirname(Dir('.').srcnode().abspath)
+
+# Scrape Journal Entries
+entries_path = os.path.join(root, 'src', 'entries')
+entries = local_env.Mako('entries.tex', 'entries.tex.mako',
+    MAKO_DICTIONARY={'PATH': entries_path, 'ROOT': root})
+for year in sorted(os.listdir(entries_path)):
+    for month in sorted(os.listdir(os.path.join(entries_path, year))):
+        for day in sorted(os.listdir(os.path.join(entries_path, year, month))):
+            daypath = os.path.join(entries_path, year, month, day)
+            for entry in sorted(os.listdir(daypath)):
+                if entry.lower().endswith('.tex'):
+                    local_env.Depends(entries, os.path.join(daypath, entry))
+
+# Build the Document
+pdf = local_env.PDF('document.tex')
+
+# Return the Document Node
+Return('pdf')

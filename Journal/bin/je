@@ -1,0 +1,18 @@
+#!/bin/env python
+import os
+import pathlib
+import datetime
+import subprocess
+
+_ROOT = pathlib.Path(__file__).resolve().parents[1]
+NOW = datetime.datetime.now()
+ENTRY_PATH = _ROOT / NOW.strftime('src/entries/%Y/%m/%d')
+ENTRY = ENTRY_PATH / NOW.strftime('%H%M.tex')
+EDITOR = os.environ.get('EDITOR', 'vim')
+
+ENTRY_PATH.mkdir(parents=True, exist_ok=True)
+if not ENTRY.exists():
+    ENTRY.write_text(
+        r'\newentry{\time{}}{My Short Entry Description}{X.Y hours}')
+
+subprocess.call([EDITOR, ENTRY])
