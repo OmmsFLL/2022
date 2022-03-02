@@ -19,3 +19,4 @@ entries.tex
 fields.aux
 *.listing
 _minted-document
+.vscode
