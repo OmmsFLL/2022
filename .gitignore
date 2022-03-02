@@ -20,3 +20,4 @@ fields.aux
 *.listing
 _minted-document
 .vscode
+.ipynb_checkpoints
